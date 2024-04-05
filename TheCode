@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jan 30 15:47:41 2024
+
+@author: HY
+"""
+
+import os
+import requests
+from datetime import datetime, timedelta
+
+def download_file(url, save_path):
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        with open(save_path, 'wb') as file:
+            file.write(response.content)
+        print(f'Downloaded: {save_path}')
+    else:
+        print(f'Failed to download {url}. Status code: {response.status_code}')
+
+def download_files(base_url, runs, outpath):
+    formatted_dates = []
+
+    for run in runs:
+        # Get the current UTC date
+        current_date = datetime.utcnow()
+
+        # Subtract one day from the current date
+        previous_date = current_date - timedelta(days=1)
+
+        # Ensure 'run' is zero-padded to two digits
+        run_zero_padded = run.zfill(2)
+
+        # Format the result in the specified format with 'run'
+        formatted_previous_date = previous_date.strftime(f"%Y%m%dT{run_zero_padded}Z")
+        formatted_previous_date_for_output = previous_date.strftime(f"%Y%m%d{run_zero_padded}")
+        
+        # Append the formatted date to the list
+        formatted_dates.append(formatted_previous_date)
+        
+    for run, formatted_previous_date in zip(runs, formatted_dates):
+        for pred_hour in pred_hours:
+            windU_url = f'{base_url.replace("{RUN}", run).replace("{PRED_hour}", pred_hour)}{formatted_previous_date}_MSC_WCPS_WindU_AGL-10m_LatLon0.008_PT{pred_hour}H.nc'
+            windV_url = f'{base_url.replace("{RUN}", run).replace("{PRED_hour}", pred_hour)}{formatted_previous_date}_MSC_WCPS_WindV_AGL-10m_LatLon0.008_PT{pred_hour}H.nc'
+            sea_water_velocityX_url = f'{base_url.replace("{RUN}", run).replace("{PRED_hour}", pred_hour)}{formatted_previous_date}_MSC_WCPS_SeaWaterVelocityX_DBS-0.5m_LatLon0.008_PT{pred_hour}H.nc'
+            sea_water_velocityY_url = f'{base_url.replace("{RUN}", run).replace("{PRED_hour}", pred_hour)}{formatted_previous_date}_MSC_WCPS_SeaWaterVelocityY_DBS-0.5m_LatLon0.008_PT{pred_hour}H.nc'
+
+            # Download WindU file
+            windU_save_path = os.path.join(outpath, f'CMC_wcps_nemo_uwindsurf_tgl_40_latlon0.009x0.009_{formatted_previous_date_for_output}_P{pred_hour}.nc')
+            download_file(windU_url, windU_save_path)
+            print(f'Downloaded: {windU_save_path}')
+
+            # Download WindV file
+            windV_save_path = os.path.join(outpath, f'CMC_wcps_nemo_vwindsurf_tgl_40_latlon0.009x0.009_{formatted_previous_date_for_output}_P{pred_hour}.nc')
+            download_file(windV_url, windV_save_path)
+            print(f'Downloaded: {windV_save_path}')
+
+            # Download SeaWaterVelocityX file
+            sea_water_velocityX_save_path = os.path.join(outpath, f'CMC_wcps_nemo_vozocrtx_depth_0.5_latlon0.009x0.009_{formatted_previous_date_for_output}_P{pred_hour}.nc')
+            download_file(sea_water_velocityX_url, sea_water_velocityX_save_path)
+            print(f'Downloaded: {sea_water_velocityX_save_path}')
+
+            # Download SeaWaterVelocityY file
+            sea_water_velocityY_save_path = os.path.join(outpath, f'CMC_wcps_nemo_vomecrty_depth_0.5_latlon0.009x0.009_{formatted_previous_date_for_output}_P{pred_hour}.nc')
+            download_file(sea_water_velocityY_url, sea_water_velocityY_save_path)
+            print(f'Downloaded: {sea_water_velocityY_save_path}')
+
+if __name__ == "__main__":
+    base_url = 'https://dd.weather.gc.ca/model_wcps/ocean-atmosphere/1km/{RUN}/{PRED_hour}/'
+    outpath = 'C:\\Users\HP\Desktop\GazEol_Renouvelable_2023\Software'
+    
+    # Specify the range of PRED_hour (000 to 010 with an increment of 001)
+    pred_hours = [f'{i:03d}' for i in range(0, 25, 1)] # range(0, 25, 1) for 24 hours
+     
+    # Specify the range of runs as strings
+    runs = ['00'] # ['00', '06', '12', '18'] for 4 runs !!
+
+    for run in runs:
+        download_files(base_url, [run], outpath)
