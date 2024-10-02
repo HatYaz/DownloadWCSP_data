@@ -69,7 +69,7 @@ def download_files(base_url, runs, outpath):
 
 if __name__ == "__main__":
     base_url = 'https://dd.weather.gc.ca/model_wcps/ocean-atmosphere/1km/{RUN}/{PRED_hour}/'
-    outpath = 'C:\\Users\HP\Desktop\GazEol_Renouvelable_2023\Software'
+    outpath = 'your path here !!'
     
     # Specify the range of PRED_hour (000 to 010 with an increment of 001)
     pred_hours = [f'{i:03d}' for i in range(0, 25, 1)] # range(0, 25, 1) for 24 hours
